@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ink">#0E0F13</color>
+    <color name="discreet_background">#3D6FB4</color>
+
+    <!-- Window theme only; all real theming is done in Compose (BroBehaveTheme). Dark-first. -->
+    <style name="Theme.BroBehave" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/ink</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>

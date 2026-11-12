@@ -1,0 +1,36 @@
+# Overrides on top of detekt's default config (buildUponDefaultConfig = true).
+naming:
+  FunctionNaming:
+    # Composable functions are PascalCase by convention.
+    ignoreAnnotated: ['Composable']
+  MatchingDeclarationName:
+    active: false
+
+style:
+  MagicNumber:
+    # Design tokens (colors, dp values) are declared as named properties.
+    ignorePropertyDeclaration: true
+    ignoreEnums: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreAnnotated: ['Preview', 'Composable']
+  UnusedPrivateMember:
+    ignoreAnnotated: ['Preview']
+  WildcardImport:
+    active: true
+
+complexity:
+  LongParameterList:
+    # Composables take many parameters by design; constructors are filled in by Hilt.
+    ignoreAnnotated: ['Composable']
+    constructorThreshold: 10
+  LongMethod:
+    ignoreAnnotated: ['Composable']
+  CyclomaticComplexMethod:
+    # Composables branch on UI state; `when` mappings (error codes -> messages) are flat lookups.
+    ignoreAnnotated: ['Composable']
+    ignoreSimpleWhenEntries: true
+  TooManyFunctions:
+    # Repositories expose one function per backend operation and view models one per UI event.
+    thresholdInClasses: 20
+    thresholdInInterfaces: 20
+    ignoreAnnotatedFunctions: ['Composable', 'Preview']

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- AAPT only accepts <adaptive-icon> in a -v26 folder, even though minSdk is 26,
+         so lint's "folder is unnecessary" hint is wrong for this one folder. -->
+    <issue id="ObsoleteSdkInt">
+        <ignore path="src/main/res/mipmap-anydpi-v26" />
+    </issue>
+</lint>

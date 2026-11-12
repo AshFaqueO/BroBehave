@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feed_title">Feed</string>
+    <string name="feed_your_bros">Your bros</string>
+    <string name="feed_empty_title">Your bros are quiet…</string>
+    <string name="feed_empty_message">Invite them. Quitting is easier when someone is watching your back.</string>
+    <string name="feed_invite">Invite a bro</string>
+    <string name="feed_streak_private">Private</string>
+    <plurals name="feed_streak_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <!-- Screen-reader summary of a friend in the strip: name, rank, streak -->
+    <string name="feed_bro_description">%1$s, %2$s, %3$s</string>
+    <string name="feed_bro_verified">verified</string>
+    <string name="feed_rank_private">rank private</string>
+    <string name="feed_loading_more">Loading more</string>
+</resources>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">BroBehave</string>
+    <!-- Neutral launcher name used in discreet mode -->
+    <string name="app_name_discreet">Habits</string>
+    <string name="tab_feed">Feed</string>
+    <string name="tab_profile">Profile</string>
+
+    <string name="unreachable_title">Can\'t reach the server</string>
+    <string name="unreachable_message">We need a connection once to load your profile. Check your internet and try again.</string>
+    <string name="unreachable_retry">Try again</string>
+    <string name="unreachable_sign_out">Sign out</string>
+
+    <!-- Notification permission explainer (Android 13+) -->
+    <string name="notify_title">Stay in the loop?</string>
+    <string name="notify_message">Get a heads-up for friend requests, your bros\' milestones and reactions to your posts. You can change this any time in Settings.</string>
+    <string name="notify_allow">Turn on</string>
+    <string name="notify_not_now">Not now</string>
+
+    <string name="channel_social_name">Friends and reactions</string>
+    <string name="channel_social_description">Friend requests, milestones, rank changes and reactions.</string>
+</resources>

@@ -1,0 +1,16 @@
+{
+    "name": "brobehave-backend-tools",
+    "private": true,
+    "description": "Dev tooling for the BroBehave Supabase backend (the Android app itself builds with Gradle).",
+    "scripts": {
+        "db:start": "supabase start",
+        "db:stop": "supabase stop",
+        "db:reset": "supabase db reset",
+        "db:test": "supabase test db",
+        "db:lint": "supabase db lint",
+        "db:status": "supabase status"
+    },
+    "devDependencies": {
+        "supabase": "^3.1.0"
+    }
+}

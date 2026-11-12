@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Rank ladder, lowest to highest -->
+    <string name="rank_clown">Clown</string>
+    <string name="rank_noob">Noob</string>
+    <string name="rank_novice">Novice</string>
+    <string name="rank_average">Average</string>
+    <string name="rank_advanced">Advanced</string>
+    <string name="rank_sigma">Sigma</string>
+    <string name="rank_chad">Chad</string>
+    <string name="rank_absolute_chad">Absolute Chad</string>
+    <string name="rank_giga_chad">Giga Chad</string>
+
+    <!-- TierBadge -->
+    <string name="tier_badge_verified">Verified</string>
+    <!-- Spoken by screen readers: %1$s is the rank name -->
+    <string name="tier_badge_description">Rank: %1$s</string>
+    <string name="tier_badge_description_verified">Rank: %1$s, verified</string>
+
+    <!-- StreakRing -->
+    <plurals name="streak_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <plurals name="streak_ring_description">
+        <item quantity="one">Streak: %d day</item>
+        <item quantity="other">Streak: %d days</item>
+    </plurals>
+    <!-- Feed posts. %1$s is the person's name. -->
+    <string name="post_streak_started">%1$s started a fresh streak. Day one, let\'s go.</string>
+    <string name="post_relapse">%1$s reset the counter. Back up, bro.</string>
+    <!-- %2$d days, %3$s rank name -->
+    <plurals name="post_milestone">
+        <item quantity="one">%1$s hit %2$d day and ranked up to %3$s</item>
+        <item quantity="other">%1$s hit %2$d days and ranked up to %3$s</item>
+    </plurals>
+    <string name="post_tier_up">%1$s climbed back up to %2$s</string>
+    <string name="post_tier_down">%1$s slipped down to %2$s</string>
+    <string name="post_someone">Someone</string>
+
+    <!-- Reactions -->
+    <string name="reaction_haha">HAHA</string>
+    <string name="reaction_impressive">Impressive</string>
+    <string name="reaction_fire">Fire</string>
+    <string name="reaction_respect">Respect</string>
+    <string name="reaction_strong">Strong</string>
+    <string name="reaction_react">React</string>
+    <string name="reaction_remove">Remove your reaction: %1$s</string>
+    <string name="reaction_react_hint">Tap for Impressive, hold for more</string>
+    <string name="reaction_pick">React with %1$s</string>
+    <plurals name="reaction_count">
+        <item quantity="one">%d reaction</item>
+        <item quantity="other">%d reactions</item>
+    </plurals>
+    <string name="reaction_show_all">Show who reacted</string>
+    <string name="reactors_title">Reactions</string>
+    <string name="reactors_all">All %1$d</string>
+    <string name="reactors_empty">No reactions yet.</string>
+
+    <!-- All Badges sheet -->
+    <string name="badges_title">All Badges</string>
+    <plurals name="badges_threshold">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <string name="badges_threshold_start">Day 0</string>
+    <string name="badges_current">You are here</string>
+    <string name="badges_locked">Locked</string>
+
+    <!-- History calendar -->
+    <string name="calendar_previous_month">Previous month</string>
+    <string name="calendar_next_month">Next month</string>
+    <string name="calendar_clean">Clean</string>
+    <string name="calendar_flagged">Slip</string>
+    <string name="calendar_relapse">Relapse</string>
+    <string name="calendar_day_clean">%1$s, clean</string>
+    <string name="calendar_day_flagged">%1$s, slip</string>
+    <string name="calendar_day_relapse">%1$s, relapse</string>
+
+    <string name="avatar_description">%1$s\'s avatar</string>
+</resources>

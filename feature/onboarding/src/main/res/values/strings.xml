@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Intro carousel -->
+    <string name="intro_tagline">Bro, Behave.</string>
+    <string name="intro_page1_title">Track your streak</string>
+    <string name="intro_page1_body">One number that matters: days since your last relapse. Watch it grow.</string>
+    <string name="intro_page2_title">Add your bros</string>
+    <string name="intro_page2_body">Quit together. See each other\'s ranks, cheer the wins, laugh off the slips.</string>
+    <string name="intro_page3_title">Climb the ranks</string>
+    <string name="intro_page3_body">Nine ranks from Clown to Giga Chad. Slips pull you down for a week, never out.</string>
+    <string name="intro_page4_title">Your privacy, your call</string>
+    <string name="intro_page4_body">You choose what friends see. No ads, no trackers, nothing sold.</string>
+    <string name="intro_next">Next</string>
+    <string name="intro_age_confirm">I am 18 or older</string>
+    <string name="intro_age_note">BroBehave is for adults only.</string>
+    <string name="intro_start">Get started</string>
+    <string name="intro_page_indicator">Page %1$d of %2$d</string>
+
+    <!-- Profile setup (after sign-in) -->
+    <string name="setup_title">Set up your profile</string>
+    <string name="setup_username">Username</string>
+    <string name="setup_username_hint">3–20 characters: a–z, 0–9, underscore</string>
+    <string name="setup_username_available">Available</string>
+    <string name="setup_username_checking">Checking…</string>
+    <string name="setup_display_name">Display name (optional)</string>
+    <string name="setup_streak_title">When did your streak start?</string>
+    <string name="setup_streak_today">Today</string>
+    <string name="setup_streak_change">Change date</string>
+    <string name="setup_streak_note">Up to 365 days back. After this, only a relapse changes it.</string>
+    <string name="setup_date_ok">OK</string>
+    <string name="setup_date_cancel">Cancel</string>
+    <string name="setup_privacy_title">What your bros can see</string>
+    <string name="setup_privacy_note">You can change these any time in Settings.</string>
+    <string name="setup_show_streak">My streak</string>
+    <string name="setup_show_relapses">My relapses</string>
+    <string name="setup_show_tier">My rank</string>
+    <string name="setup_tracking_title">Slip tracking (optional)</string>
+    <string name="setup_tracking_note">A slip is a visit to an adult site. It never resets your streak, but it lowers your rank for 7 days.</string>
+    <string name="setup_tracking_self">I\'ll report slips myself</string>
+    <string name="setup_tracking_auto">Detect automatically (coming soon)</string>
+    <string name="setup_tracking_later">Decide later</string>
+    <string name="setup_timezone">Your days follow this timezone: %1$s</string>
+    <string name="setup_submit">Start my streak</string>
+    <string name="setup_sign_out">Use a different account</string>
+</resources>

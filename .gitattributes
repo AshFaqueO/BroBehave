@@ -1,0 +1,5 @@
+# Keep LF everywhere (matches .editorconfig; gradlew must be LF to run on Linux/CI).
+* text=auto eol=lf
+*.bat text eol=crlf
+*.png binary
+*.jar binary
