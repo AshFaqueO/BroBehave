@@ -17,6 +17,12 @@
     <string name="notify_allow">Turn on</string>
     <string name="notify_not_now">Not now</string>
 
+    <!-- Update offer (GitHub builds) -->
+    <string name="update_title">Update available</string>
+    <string name="update_message">BroBehave %1$s is out. Download it, then open the file to install. You can check the file against the SHA-256 on the release page.</string>
+    <string name="update_download">Download</string>
+    <string name="update_later">Later</string>
+
     <string name="channel_social_name">Friends and reactions</string>
     <string name="channel_social_description">Friend requests, milestones, rank changes and reactions.</string>
 </resources>

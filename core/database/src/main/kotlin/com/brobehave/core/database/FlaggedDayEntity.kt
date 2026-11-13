@@ -32,6 +32,10 @@ data class RelapseEntity(
     val note: String? = null,
 )
 
+/** One day on which automatic detection was running. Synced to `detection_heartbeats`. */
+@Entity(tableName = "heartbeats")
+data class HeartbeatEntity(@PrimaryKey val localDate: String, val synced: Boolean = false)
+
 /** The signed-in user's profile, cached as JSON so the app works offline. Single row. */
 @Entity(tableName = "own_profile")
 data class OwnProfileEntity(@PrimaryKey val slot: Int = 0, val userId: String, val json: String)

@@ -15,7 +15,7 @@ import dagger.hilt.android.AndroidEntryPoint
 /** The single activity; everything else is Compose. */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    /** Username from an invite link (https://<host>/u/<username>) waiting to be handled. */
+    /** Username from an invite link waiting to be handled. */
     private var inviteUsername by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,10 +37,10 @@ class MainActivity : ComponentActivity() {
         intent.inviteUsername()?.let { inviteUsername = it }
     }
 
+    /** Both invite link forms carry the username as `?u=<username>`. */
     private fun Intent.inviteUsername(): String? {
-        val segments = data?.pathSegments.orEmpty()
-        val isInvite = action == Intent.ACTION_VIEW && segments.firstOrNull() == "u"
-        return segments.getOrNull(1)?.takeIf { isInvite && USERNAME.matches(it) }
+        val link = data?.takeIf { action == Intent.ACTION_VIEW && it.isHierarchical } ?: return null
+        return link.getQueryParameter("u")?.lowercase()?.takeIf(USERNAME::matches)
     }
 
     private companion object {

@@ -22,15 +22,25 @@
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTask">
-            <!-- Invite links: https://<inviteHost>/u/<username> (App Links) -->
+            <!-- Invite links on the web: https://<inviteHost><invitePath>/?u=<username>.
+                 Opens the app directly once the domain is verified (assetlinks.json). -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:host="${inviteHost}"
-                    android:pathPrefix="/u/"
+                    android:pathPrefix="${invitePath}"
                     android:scheme="https" />
+            </intent-filter>
+            <!-- brobehave://invite?u=<username>: the "Open in BroBehave" button on the invite page. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="invite"
+                    android:scheme="brobehave" />
             </intent-filter>
         </activity>
 

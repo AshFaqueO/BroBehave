@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- STAGING BUILDS ONLY (release code against the local Supabase stack, plain http).
+         Real release builds keep Android's default of https only. -->
+    <application android:usesCleartextTraffic="true" />
+</manifest>

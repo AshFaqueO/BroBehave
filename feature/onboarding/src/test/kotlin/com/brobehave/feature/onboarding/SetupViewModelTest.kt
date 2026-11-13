@@ -1,13 +1,16 @@
 package com.brobehave.feature.onboarding
 
+import com.brobehave.core.data.AppPreferences
 import com.brobehave.core.data.AuthRepository
 import com.brobehave.core.data.DataError
 import com.brobehave.core.data.DataException
 import com.brobehave.core.data.ProfileRepository
+import com.brobehave.core.model.FeatureFlags
 import com.brobehave.core.model.OnboardingInput
 import com.brobehave.core.model.Visibility
 import com.brobehave.core.testing.MainDispatcherExtension
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.slot
 import java.time.Clock
@@ -36,7 +39,12 @@ class SetupViewModelTest {
     private val auth = mockk<AuthRepository>(relaxed = true)
     private val clock = Clock.fixed(Instant.parse("2026-11-12T06:00:00Z"), ZoneId.of("UTC"))
 
-    private fun viewModel() = SetupViewModel(profiles, auth, clock)
+    private val preferences = mockk<AppPreferences>(relaxed = true)
+    private val flags = object : FeatureFlags {
+        override val autoDetection = true
+    }
+
+    private fun viewModel() = SetupViewModel(profiles, auth, preferences, flags, clock)
 
     @Test
     fun `username is cleaned and too-short names are not checked`() = runTest(dispatcher) {
@@ -98,6 +106,24 @@ class SetupViewModelTest {
         assertEquals(Visibility.PRIVATE, sent.captured.showRelapses)
         assertEquals(Visibility.FRIENDS, sent.captured.showStreak)
         assertNull(vm.state.value.error)
+    }
+
+    @Test
+    fun `choosing automatic detection only queues the disclosure and is not self-report`() = runTest(dispatcher) {
+        coEvery { profiles.isUsernameAvailable(any()) } returns Result.success(true)
+        val sent = slot<OnboardingInput>()
+        coEvery { profiles.completeOnboarding(capture(sent)) } returns Result.success(Unit)
+        val vm = viewModel()
+        assertTrue(vm.state.value.autoDetectionAvailable)
+
+        vm.onUsernameChange("rafi")
+        vm.onSlipChoiceChange(SlipChoice.AUTO_DETECTION)
+        advanceUntilIdle()
+        vm.submit()
+        advanceUntilIdle()
+
+        assertFalse(sent.captured.selfReport)
+        coVerify { preferences.setPendingDetectionSetup(true) }
     }
 
     @Test

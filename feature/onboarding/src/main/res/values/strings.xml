@@ -37,7 +37,7 @@
     <string name="setup_tracking_title">Slip tracking (optional)</string>
     <string name="setup_tracking_note">A slip is a visit to an adult site. It never resets your streak, but it lowers your rank for 7 days.</string>
     <string name="setup_tracking_self">I\'ll report slips myself</string>
-    <string name="setup_tracking_auto">Detect automatically (coming soon)</string>
+    <string name="setup_tracking_auto">Detect automatically (you will see exactly how it works first)</string>
     <string name="setup_tracking_later">Decide later</string>
     <string name="setup_timezone">Your days follow this timezone: %1$s</string>
     <string name="setup_submit">Start my streak</string>

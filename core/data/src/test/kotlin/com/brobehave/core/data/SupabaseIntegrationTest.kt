@@ -4,6 +4,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.brobehave.core.database.BroBehaveDatabase
+import com.brobehave.core.model.FlagSource
 import com.brobehave.core.model.FriendRelation
 import com.brobehave.core.model.OnboardingInput
 import com.brobehave.core.model.Rank
@@ -76,6 +77,7 @@ class SupabaseIntegrationTest {
             database.ownProfileDao(),
             database.flaggedDayDao(),
             database.relapseDao(),
+            database.heartbeatDao(),
             SupabaseModule.json,
         )
         auth = SupabaseAuthRepository(client, store)
@@ -84,6 +86,7 @@ class SupabaseIntegrationTest {
         streak = OfflineFirstStreakRepository(
             database.flaggedDayDao(),
             database.relapseDao(),
+            database.heartbeatDao(),
             store,
             client,
             profiles,
@@ -184,6 +187,14 @@ class SupabaseIntegrationTest {
         assertEquals(Rank.AVERAGE, afterSlip.tier)
         assertEquals(Rank.ADVANCED, afterSlip.streakTier)
         assertEquals(1, streak.observeHistory().first().flaggedDates.size)
+
+        // Automatic detection: a flag with source "auto" needs no self-report, and one
+        // heartbeat alone does not earn Verified (that takes every day of the window).
+        streak.recordHeartbeat()
+        streak.recordHeartbeat()
+        assertFalse("auto flag on an already flagged day is a no-op", streak.reportSlip(null, FlagSource.AUTO))
+        streak.sync().getOrThrow()
+        assertFalse(profiles.profile.first()!!.tierVerified)
 
         // A relapse: back to Clown locally at once, and on the server after sync.
         streak.reportRelapse(note = null)

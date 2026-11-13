@@ -2,6 +2,8 @@ package com.brobehave.core.data
 
 import com.brobehave.core.database.FlaggedDayDao
 import com.brobehave.core.database.FlaggedDayEntity
+import com.brobehave.core.database.HeartbeatDao
+import com.brobehave.core.database.HeartbeatEntity
 import com.brobehave.core.database.RelapseDao
 import com.brobehave.core.database.RelapseEntity
 import com.brobehave.core.model.FlagSource
@@ -42,6 +44,12 @@ interface StreakRepository {
      */
     suspend fun reportSlip(note: String?, source: FlagSource = FlagSource.SELF): Boolean
 
+    /**
+     * Records that automatic detection is running today (once per local day). The server
+     * grants Verified only when every day in the window has one.
+     */
+    suspend fun recordHeartbeat()
+
     /** Pushes queued actions, then pulls history and the profile. */
     suspend fun sync(): Result<Unit>
 }
@@ -59,6 +67,7 @@ private data class RelapseRow(
 internal class OfflineFirstStreakRepository @Inject constructor(
     private val flaggedDayDao: FlaggedDayDao,
     private val relapseDao: RelapseDao,
+    private val heartbeatDao: HeartbeatDao,
     private val localStore: LocalStore,
     private val client: SupabaseClient,
     private val profileRepository: ProfileRepository,
@@ -118,6 +127,14 @@ internal class OfflineFirstStreakRepository @Inject constructor(
         return inserted
     }
 
+    override suspend fun recordHeartbeat() {
+        val profile = localStore.profile() ?: return
+        val today = StreakMath.localDate(clock.instant(), StreakMath.zoneOf(profile.timezone))
+        if (heartbeatDao.insertIfAbsent(HeartbeatEntity(today.toString())) != ROW_IGNORED) {
+            syncScheduler.requestSync()
+        }
+    }
+
     private suspend fun applyLocalTier(profile: Profile) {
         val now = clock.instant()
         val today = StreakMath.localDate(now, StreakMath.zoneOf(profile.timezone))
@@ -132,6 +149,7 @@ internal class OfflineFirstStreakRepository @Inject constructor(
         val userId = client.requireUserId()
         pushRelapses(userId)
         pushFlaggedDays(userId)
+        pushHeartbeats(userId)
         pullHistory()
         profileRepository.refresh().getOrThrow()
     }
@@ -165,6 +183,20 @@ internal class OfflineFirstStreakRepository @Inject constructor(
                 )
             }
             flaggedDayDao.markSynced(day.localDate)
+        }
+    }
+
+    private suspend fun pushHeartbeats(userId: String) {
+        heartbeatDao.unsynced().forEach { heartbeat ->
+            pushOnce {
+                client.postgrest.from("detection_heartbeats").insert(
+                    buildJsonObject {
+                        put("user_id", userId)
+                        put("local_date", heartbeat.localDate)
+                    },
+                )
+            }
+            heartbeatDao.markSynced(heartbeat.localDate)
         }
     }
 

@@ -57,6 +57,21 @@ interface RelapseDao {
 }
 
 @Dao
+interface HeartbeatDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertIfAbsent(heartbeat: HeartbeatEntity): Long
+
+    @Query("SELECT * FROM heartbeats WHERE synced = 0")
+    suspend fun unsynced(): List<HeartbeatEntity>
+
+    @Query("UPDATE heartbeats SET synced = 1 WHERE localDate = :localDate")
+    suspend fun markSynced(localDate: String)
+
+    @Query("DELETE FROM heartbeats")
+    suspend fun clear()
+}
+
+@Dao
 interface OwnProfileDao {
     @Query("SELECT * FROM own_profile WHERE slot = 0")
     fun observe(): Flow<OwnProfileEntity?>

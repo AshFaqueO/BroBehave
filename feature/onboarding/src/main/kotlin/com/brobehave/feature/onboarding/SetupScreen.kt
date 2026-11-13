@@ -158,9 +158,13 @@ internal fun SetupContent(
                 selected = state.slipChoice == SlipChoice.SELF_REPORT,
                 onSelect = { onSlipChoiceChange(SlipChoice.SELF_REPORT) },
             )
-            // Automatic detection arrives with the detection module (Phase 4).
-            ChoiceRow(label = stringResource(R.string.setup_tracking_auto), selected = false, onSelect = {
-            }, enabled = false)
+            if (state.autoDetectionAvailable) {
+                ChoiceRow(
+                    label = stringResource(R.string.setup_tracking_auto),
+                    selected = state.slipChoice == SlipChoice.AUTO_DETECTION,
+                    onSelect = { onSlipChoiceChange(SlipChoice.AUTO_DETECTION) },
+                )
+            }
             ChoiceRow(
                 label = stringResource(R.string.setup_tracking_later),
                 selected = state.slipChoice == SlipChoice.LATER,

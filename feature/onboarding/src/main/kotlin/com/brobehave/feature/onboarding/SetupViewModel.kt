@@ -2,10 +2,12 @@ package com.brobehave.feature.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.brobehave.core.data.AppPreferences
 import com.brobehave.core.data.AuthRepository
 import com.brobehave.core.data.DataError
 import com.brobehave.core.data.ProfileRepository
 import com.brobehave.core.data.dataError
+import com.brobehave.core.model.FeatureFlags
 import com.brobehave.core.model.OnboardingInput
 import com.brobehave.core.model.Visibility
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,7 +25,7 @@ import kotlinx.coroutines.launch
 
 enum class UsernameStatus { EMPTY, INVALID, CHECKING, AVAILABLE, TAKEN, UNKNOWN }
 
-enum class SlipChoice { SELF_REPORT, LATER }
+enum class SlipChoice { SELF_REPORT, AUTO_DETECTION, LATER }
 
 data class SetupUiState(
     val username: String = "",
@@ -36,6 +38,8 @@ data class SetupUiState(
     val showTier: Boolean = true,
     val slipChoice: SlipChoice = SlipChoice.LATER,
     val timezone: String,
+    /** False when automatic detection is switched off for this build. */
+    val autoDetectionAvailable: Boolean = false,
     val submitting: Boolean = false,
     val error: DataError? = null,
 ) {
@@ -54,12 +58,21 @@ data class SetupUiState(
 class SetupViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
     private val authRepository: AuthRepository,
+    private val preferences: AppPreferences,
+    featureFlags: FeatureFlags,
     clock: Clock,
 ) : ViewModel() {
     private val zone: ZoneId = ZoneId.systemDefault()
     private val today = LocalDate.now(clock.withZone(zone))
 
-    private val _state = MutableStateFlow(SetupUiState(today = today, streakStart = today, timezone = zone.id))
+    private val _state = MutableStateFlow(
+        SetupUiState(
+            today = today,
+            streakStart = today,
+            timezone = zone.id,
+            autoDetectionAvailable = featureFlags.autoDetection,
+        ),
+    )
     val state: StateFlow<SetupUiState> = _state.asStateFlow()
 
     private var usernameCheck: Job? = null
@@ -122,6 +135,9 @@ class SetupViewModel @Inject constructor(
                 showRelapses = current.showRelapses.toVisibility(),
                 showTier = current.showTier.toVisibility(),
             )
+            // Choosing automatic detection only queues the disclosure screen; nothing is
+            // turned on until the user accepts it there.
+            if (current.slipChoice == SlipChoice.AUTO_DETECTION) preferences.setPendingDetectionSetup(true)
             val result = profileRepository.completeOnboarding(input)
             _state.update { state ->
                 val error = result.exceptionOrNull()?.dataError()

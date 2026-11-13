@@ -1,7 +1,10 @@
 package com.brobehave.app.navigation
 
 import android.Manifest
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.os.Build
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +28,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -42,6 +47,7 @@ import com.brobehave.core.designsystem.component.ConfirmDialog
 import com.brobehave.core.designsystem.component.EmptyState
 import com.brobehave.core.designsystem.icon.BroIcons
 import com.brobehave.core.ui.LoadingScreen
+import com.brobehave.detection.DetectionDisclosureScreen
 import com.brobehave.feature.auth.AuthScreen
 import com.brobehave.feature.feed.FeedScreen
 import com.brobehave.feature.onboarding.OnboardingScreen
@@ -86,6 +92,9 @@ data object EditProfileKey : NavKey
 @Serializable
 data class UserProfileKey(val userId: String) : NavKey
 
+@Serializable
+data object DetectionDisclosureKey : NavKey
+
 private fun RootState.key(): NavKey = when (this) {
     RootState.LOADING -> LoadingKey
     RootState.INTRO -> IntroKey
@@ -122,6 +131,10 @@ fun BroBehaveNavShell(
     LaunchedEffect(rootKey) {
         if (backStack.firstOrNull() != rootKey) backStack.resetTo(rootKey)
     }
+    val openDisclosure by viewModel.openDetectionDisclosure.collectAsStateWithLifecycle()
+    LaunchedEffect(openDisclosure) {
+        if (openDisclosure && DetectionDisclosureKey !in backStack) backStack.add(DetectionDisclosureKey)
+    }
     LaunchedEffect(inviteUsername, rootKey) {
         if (inviteUsername != null && rootKey == MainKey) {
             backStack.add(FriendsKey(query = inviteUsername))
@@ -150,7 +163,11 @@ fun BroBehaveNavShell(
                         onOpenFriends = { backStack.add(FriendsKey()) },
                         onOpenSettings = { backStack.add(SettingsKey) },
                         onEditProfile = { backStack.add(EditProfileKey) },
+                        onEnableDetection = { backStack.add(DetectionDisclosureKey) },
                     )
+                }
+                entry<DetectionDisclosureKey> { key ->
+                    DetectionDisclosureScreen(onFinished = { backStack.remove(key) })
                 }
                 entry<FriendsKey> { key ->
                     FriendsScreen(
@@ -165,6 +182,31 @@ fun BroBehaveNavShell(
                     UserProfileScreen(userId = key.userId, onBack = { backStack.remove(key) })
                 }
             },
+        )
+    }
+
+    // Updates: Play runs its own flow; the GitHub build offers the new APK as a download.
+    val activity = LocalActivity.current
+    LaunchedEffect(rootKey, activity) {
+        if (rootKey == MainKey && activity != null) viewModel.onMainShown(activity)
+    }
+    val update by viewModel.availableUpdate.collectAsStateWithLifecycle()
+    update?.let { available ->
+        val context = LocalContext.current
+        ConfirmDialog(
+            title = stringResource(R.string.update_title),
+            message = stringResource(R.string.update_message, available.versionName),
+            confirmLabel = stringResource(R.string.update_download),
+            dismissLabel = stringResource(R.string.update_later),
+            onConfirm = {
+                viewModel.dismissUpdate()
+                try {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, available.downloadUrl.toUri()))
+                } catch (_: ActivityNotFoundException) {
+                    // No browser to download with; the update will be offered again tomorrow.
+                }
+            },
+            onDismiss = viewModel::dismissUpdate,
         )
     }
 
@@ -185,6 +227,7 @@ private fun MainScreen(
     onOpenFriends: () -> Unit,
     onOpenSettings: () -> Unit,
     onEditProfile: () -> Unit,
+    onEnableDetection: () -> Unit,
 ) {
     MainScaffold(
         feed = { modifier -> FeedScreen(onOpenProfile = onOpenProfile, onInvite = onOpenFriends, modifier = modifier) },
@@ -193,6 +236,7 @@ private fun MainScreen(
                 onOpenFriends = onOpenFriends,
                 onOpenSettings = onOpenSettings,
                 onEditProfile = onEditProfile,
+                onEnableDetection = onEnableDetection,
                 modifier = modifier,
             )
         },

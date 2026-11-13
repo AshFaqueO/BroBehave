@@ -1,13 +1,18 @@
 package com.brobehave.app
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.brobehave.app.distribution.AvailableUpdate
+import com.brobehave.app.distribution.DistributionServices
 import com.brobehave.app.push.PushTokenUploader
 import com.brobehave.core.data.AppPreferences
 import com.brobehave.core.data.AuthRepository
 import com.brobehave.core.data.AuthState
 import com.brobehave.core.data.ProfileRepository
 import com.brobehave.core.data.StreakRepository
+import com.brobehave.core.model.DetectionGateway
+import com.brobehave.core.model.DetectionStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +48,8 @@ class AppViewModel @Inject constructor(
     private val streakRepository: StreakRepository,
     private val preferences: AppPreferences,
     private val pushTokenUploader: PushTokenUploader,
+    private val detectionGateway: DetectionGateway,
+    private val distribution: DistributionServices,
 ) : ViewModel() {
     private val loadFailed = MutableStateFlow(false)
 
@@ -71,9 +78,29 @@ class AppViewModel @Inject constructor(
     ) { shown, root -> !shown && root == RootState.MAIN }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
+    /** True when onboarding chose automatic detection and its disclosure has not been shown yet. */
+    val openDetectionDisclosure: StateFlow<Boolean> = combine(
+        preferences.pendingDetectionSetup,
+        state,
+    ) { pending, root -> pending && root == RootState.MAIN && detectionGateway.available }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** A newer version to offer (GitHub builds); Play shows its own update UI. */
+    val availableUpdate: StateFlow<AvailableUpdate?> = distribution.availableUpdate
+
+    fun onMainShown(activity: Activity) {
+        viewModelScope.launch { distribution.onMainShown(activity) }
+    }
+
+    fun dismissUpdate() = distribution.dismissUpdate()
+
     init {
         viewModelScope.launch {
             authRepository.state.distinctUntilChanged().collectLatest { auth ->
+                // Detection belongs to an account: signing out turns it off.
+                if (auth is AuthState.SignedOut && detectionGateway.state.value.status == DetectionStatus.ACTIVE) {
+                    detectionGateway.stop()
+                }
                 if (auth is AuthState.SignedIn) loadSignedInUser()
             }
         }

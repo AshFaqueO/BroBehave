@@ -158,9 +158,14 @@ dispatch trigger does nothing.
 ## Things that are placeholders (replace before release)
 
 - All design tokens, icons, avatars (initials) and the launcher icons — pending the design handoff.
-- Domain `brobehave.app`: invite links (`inviteHost` in `app/build.gradle.kts`,
-  `friends_invite_link`), privacy policy, terms and web account-deletion URLs. App Links
-  also need `/.well-known/assetlinks.json` hosted on that domain.
+- Web pages: `brobehave.webBaseUrl` in `gradle.properties` (currently the GitHub Pages
+  address) drives the invite link, privacy policy, terms and account-deletion URLs. The
+  pages themselves are in `/site`, deployed by `.github/workflows/pages.yml`. GitHub Pages
+  for a private repository needs a paid plan. The contact email on those pages is still a
+  placeholder, and App Links need `/.well-known/assetlinks.json` on the serving domain
+  (until then invite links open the web page, whose button opens the app via `brobehave://`).
+- `brobehave.githubRepo` in `gradle.properties`: the repository whose Releases the `github`
+  flavor checks. The Releases API only answers for a **public** repository.
 - Push uses FCM registration tokens, which Firebase now marks deprecated in favour of
   Firebase Installation IDs; migrate once the server-side send API for IDs is confirmed.
 
@@ -175,11 +180,108 @@ Firebase Gradle plugins are skipped and push/crash reporting are inactive.
 
 1. **Foundation** — scaffold, convention plugins, flavors, design-system skeleton, Supabase schema + RLS tests, Firebase wiring, navigation shell. ✔
 2. **Core social app** — onboarding, auth, Profile page, Feed page, reactions, notifications, moderation, offline sync. ← built; see "Phase 2 open items"
-3. **Tier system** — section 5 end to end, boundary/timezone tests, SQL↔Kotlin config test.
-4. **Automatic detection** — `:detection` DNS-only VpnService, blocklist, prominent disclosure, heartbeats.
-5. **Release & distribution** — signing, R8 rules, baseline profiles, GitHub Actions, README/PRIVACY/Play checklist. Ask the owner about the license first.
+3. **Tier system** — section 5 end to end, boundary/timezone tests, SQL↔Kotlin config test. ✔
+4. **Automatic detection** — `:detection` DNS-only VpnService, blocklist, prominent disclosure, heartbeats. ← built (ahead of Phase 3); see "Automatic detection"
+5. **Release & distribution** — signing, R8 rules, baseline profiles, GitHub Actions, README/PRIVACY/Play checklist. ✔ (licence: private, all rights reserved)
 
 Finish and verify each phase (builds, tests pass, app runs) before starting the next.
+
+### Tier system (Phase 3)
+
+- `compute_tiers(user, emit_events, now)` in SQL is the authority; `TierCalculator` /
+  `StreakSnapshot` in Kotlin compute the same thing for instant UI. The same boundary
+  cases are tested on both sides (`supabase/tests/database/tiers.test.sql`,
+  `LocalTierBoundaryTest`), and `TierConfigSyncTest` reads the migrations and fails if the
+  rank ladder in SQL and Kotlin ever differ.
+- Verified = a heartbeat for every day of the 7-day window ending today **or** ending
+  yesterday (so the badge does not drop at midnight before the day's first heartbeat).
+- Events: the streak crossing a threshold posts `milestone`; a flagged day posts
+  `tier_down`; a flag ageing out posts `tier_up`; a relapse posts only `relapse` +
+  `streak_started`.
+
+### Release & distribution (Phase 5)
+
+- **Flavors:** `play` uses Play In-App Updates and In-App Review; `github` checks the
+  GitHub Releases API at most once a day and offers the APK as a browser download
+  (`app/src/play`, `app/src/github`, common interface `DistributionServices`).
+- **Signing:** from `BROBEHAVE_KEYSTORE_FILE`, `BROBEHAVE_KEYSTORE_PASSWORD`,
+  `BROBEHAVE_KEY_ALIAS`, `BROBEHAVE_KEY_PASSWORD`. Without them release builds are unsigned.
+- **`staging` build type:** the R8-shrunk release code, debug-signed and allowed plain http,
+  for testing what actually ships against the local stack:
+  `./gradlew assembleGithubStaging` then install as usual. Never distributed.
+- **R8:** no custom keep rules were needed; the libraries' own consumer rules suffice
+  (verified by running the staging build on an emulator: session restore, feed decoding,
+  Room, detection service).
+- **Baseline profiles:** `:baselineprofile` module;
+  `./gradlew :app:generateGithubReleaseBaselineProfile :app:generatePlayReleaseBaselineProfile`
+  on an emulator or rooted device (it clears the app's data on that device). Generated
+  files in `app/src/<flavor>Release/generated/baselineProfiles/` are committed.
+- **CI** (`.github/workflows`): `ci.yml` on pull requests (ktlint, detekt, unit tests,
+  lint, screenshots, both flavors, database tests, integration tests); `release.yml` on a
+  `v*` tag (signed GitHub APK + SHA-256 + changelog as a Release, signed Play App Bundle
+  as an artifact); `pages.yml` publishes `/site`. The workflows have not run yet — they
+  need the repository and its secrets (listed at the top of `release.yml`).
+- **Release APK naming:** `BroBehave-<versionName>-<versionCode>.apk`; the in-app update
+  check reads the version code from that name.
+- Docs: `README.md`, `PRIVACY.md`, `docs/play-store-checklist.md`, `docs/firebase-setup.md`.
+
+### Automatic detection (Phase 4, built before Phase 3 at the owner's request)
+
+How it works (`:detection`):
+
+- `DetectionVpnService` is an on-device `VpnService` that receives **only DNS**: it sets a
+  virtual DNS server (`10.111.222.2`) and adds a route for that single address, so all other
+  traffic bypasses the VPN. Each query is forwarded unchanged to the network's own DNS
+  server (`UpstreamResolver`) and the answer relayed back. Nothing is blocked or modified.
+- `engine/` is pure Kotlin and fully unit-tested: `DnsMessage` (reads the question name,
+  total on malformed input, fuzz-tested), `IpPackets` (IPv4/UDP parse + build, TCP reset),
+  `DomainMatcher` (sorted 64-bit FNV-1a hashes, subdomain matching), `DailyFlagger`
+  (one flag per local day), `UpstreamResolver` (UDP, TCP retry when truncated).
+- TCP: the tunnel has no TCP stack. Truncated UDP answers are completed over TCP upstream
+  and relayed over UDP; TCP connection attempts to the virtual server (DNS-over-TCP/TLS)
+  get an immediate reset so the system resolver falls back to UDP.
+- On a match the service calls `StreakRepository.reportSlip(source = AUTO)`, which writes
+  today's local date to `flagged_days`. **The site name is never stored, logged, or put in
+  an exception; it exists only as a local variable during the comparison.**
+- While running it records one heartbeat per local day (`detection_heartbeats`); the
+  server grants Verified only when every day in the window has one.
+- Turning it on always goes through `DetectionDisclosureScreen` (full screen, unticked
+  checkbox, "Turn on" / "Not now") **before** Android's VPN dialog. There is deliberately
+  no `start()` on `DetectionGateway`.
+- Foreground service type `systemExempted` (the type Android lists for VPN apps), with a
+  persistent notification that has a "Turn off" action.
+- Restarts after reboot and after an app update if the user had it on and VPN consent
+  still stands; `onRevoke` (another VPN took over) sets status REVOKED and stops heartbeats.
+- Gated by `FeatureFlags.autoDetection` (per-flavor `AUTO_DETECTION` BuildConfig field).
+
+Blocklist:
+
+```bash
+python tools/build_blocklist.py                              # refresh the bundled asset
+python tools/build_blocklist.py --out dist/ --key <key.pem>  # signed update package
+```
+
+- Source: StevenBlack/hosts "porn-only" (MIT). Bundled as `detection/src/main/assets/blocklist.bin`
+  — hashes only, never names. OISD NSFW is not included yet (check its licence first).
+- Updates: `BlocklistUpdater` (weekly WorkManager job) fetches a manifest and the file from
+  the `blocklist` Edge Function and installs it only if `BlocklistVerifier` accepts it:
+  newer version, matching size and SHA-256, valid ECDSA P-256 signature, parses as a list.
+- To enable updates: create a P-256 key pair, keep the private key **outside the repo**,
+  put the base64 X.509 public key in `local.properties` as `BLOCKLIST_PUBLIC_KEY`, and
+  upload `manifest.json` + `blocklist.bin` to the private `blocklist` Storage bucket.
+  While the key is blank, only the bundled list is used.
+- Debug builds only: `detection-test.brobehave.invalid` counts as listed, so detection can
+  be tested without looking up a real adult site
+  (`adb shell ping -c 1 www.detection-test.brobehave.invalid`).
+
+Known limits: Chrome "Secure DNS" / DNS-over-HTTPS, a named Private DNS provider, or
+another VPN app all hide lookups from this method (Private DNS and VPN takeover are
+detected and explained; DoH inside an app is not detectable). IPv4 tunnel only.
+
+Phase 4 open items: the signed-update path has unit tests but has not been run end to end
+against a published list; always-on VPN and reboot restart are implemented but untested;
+"another VPN took over" was not exercised on a device; the Play VpnService declaration
+and video are Phase 5.
 
 ### Phase 2 open items
 

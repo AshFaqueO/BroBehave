@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy policy — BroBehave</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site"><a href="./">BroBehave</a></header>
+  <main>
+    <h1>Privacy policy</h1>
+    <p class="muted">Draft — last updated 13 November 2026. This page mirrors PRIVACY.md in the project.</p>
+
+    <p>BroBehave is a social accountability app for adults (18+). It deals with a sensitive subject, so it is built to collect as little as possible. There are no ads, no advertising identifiers, no analytics trackers, and your data is never sold.</p>
+
+    <h2>What we collect</h2>
+    <table>
+      <tr><th>Data</th><th>Why</th><th>Who can see it</th></tr>
+      <tr><td>Email address (or Google account email)</td><td>Signing in, password reset</td><td>Only you</td></tr>
+      <tr><td>Username, display name</td><td>So friends can find and recognise you</td><td>Anyone searching by username; your friends</td></tr>
+      <tr><td>Timezone</td><td>To count days by your local midnight</td><td>Only you</td></tr>
+      <tr><td>Streak start, longest streak, rank</td><td>The core of the app</td><td>Your friends, unless you set them to private</td></tr>
+      <tr><td>Relapse dates</td><td>Resetting your streak; your history calendar</td><td>Your friends, unless you set relapses to private</td></tr>
+      <tr><td>Flagged days (date and whether it was self-reported or automatic)</td><td>Adjusting your rank for 7 days</td><td>Only you. Friends see only the resulting rank.</td></tr>
+      <tr><td>Friendships, blocks, reactions, reports</td><td>The social features and moderation</td><td>The people involved; reports are seen only by moderators</td></tr>
+      <tr><td>Notification token</td><td>Sending you push notifications</td><td>Only our systems</td></tr>
+      <tr><td>Crash reports (via Firebase Crashlytics)</td><td>Fixing bugs</td><td>Only the developers. They never contain site names or notes.</td></tr>
+    </table>
+
+    <h2>What we never collect</h2>
+    <ul>
+      <li>The names of websites you visit, how many times, or at what time.</li>
+      <li>Your private notes on a relapse or slip. They stay on your phone and are never uploaded.</li>
+      <li>Your contacts, location, photos, or browsing history.</li>
+    </ul>
+
+    <h2>Automatic detection (optional, off by default)</h2>
+    <p>If you turn on automatic detection, BroBehave uses Android's VPN feature <strong>on your phone only</strong>:</p>
+    <ul>
+      <li><strong>What is checked:</strong> only the names of websites your phone looks up, compared on the phone against a list of adult sites. Nothing is blocked or changed, and your traffic is not routed through any BroBehave server.</li>
+      <li><strong>What is shared:</strong> only that a day was flagged, which lowers your rank for 7 days.</li>
+      <li><strong>What is never shared or stored:</strong> which sites, how many times, or when. Site names are discarded the moment they are checked, even on your phone.</li>
+    </ul>
+    <p>You see a full explanation and must agree before it starts, and you can turn it off at any time from the app or its notification.</p>
+
+    <h2>Where your data is stored</h2>
+    <p>Account and app data is stored with Supabase (database, sign-in and file storage). Push notifications are delivered through Firebase Cloud Messaging and crash reports through Firebase Crashlytics, both by Google. Data is encrypted in transit.</p>
+
+    <h2>Your choices</h2>
+    <ul>
+      <li>Choose what friends see (streak, relapses, rank) in Settings → Privacy.</li>
+      <li>Turn each notification type on or off in Settings.</li>
+      <li>Block or report anyone; remove friends at any time.</li>
+      <li>Delete your account and all its data in Settings → Delete my account, or through the <a href="delete-account.html">account deletion page</a>.</li>
+    </ul>
+    <p>A flagged day cannot be removed once recorded; this is what keeps ranks honest. Deleting your account removes them along with everything else.</p>
+
+    <h2>Age</h2>
+    <p>BroBehave is for adults only. You must confirm you are 18 or older to use it. We do not knowingly keep data about anyone under 18.</p>
+
+    <h2>Changes and contact</h2>
+    <p>If this policy changes in a way that matters, the app will tell you. Questions or requests: <span id="contact">[contact email to be added]</span>.</p>
+
+    <nav class="links">
+      <a href="./">Home</a>
+      <a href="terms.html">Terms of use</a>
+      <a href="delete-account.html">Delete your account</a>
+    </nav>
+  </main>
+</body>
+</html>

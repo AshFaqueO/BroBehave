@@ -1,0 +1,103 @@
+name: CI
+
+# Every pull request: static analysis, unit tests, database (RLS) tests, and both flavors built.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Lint, tests, build both flavors
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: ktlint and detekt
+        run: ./gradlew ktlintCheck detekt --continue
+
+      - name: Unit tests
+        run: ./gradlew test
+
+      - name: Android lint
+        run: ./gradlew :app:lintPlayDebug :app:lintGithubDebug
+
+      - name: Screenshot tests
+        run: ./gradlew :core:designsystem:verifyRoborazziDebug
+
+      - name: Build both flavors (debug and release)
+        run: ./gradlew assemblePlayDebug assembleGithubDebug assemblePlayRelease assembleGithubRelease
+
+      - name: Upload test and lint reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            **/build/reports/**
+            **/build/outputs/roborazzi/**
+          retention-days: 7
+
+  database:
+    name: Database migrations and RLS tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Only the database is needed for the pgTAP tests.
+      - name: Start local database
+        run: supabase db start
+
+      - name: Lint schema
+        run: supabase db lint --fail-on error
+
+      - name: RLS, onboarding and tier tests (pgTAP)
+        run: supabase test db
+
+  integration:
+    name: App repositories against a real backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Auth + REST are needed here; the rest of the stack is skipped to save time.
+      - name: Start local Supabase
+        run: supabase start -x studio,imgproxy,logflare,vector,supavisor,realtime,edge-runtime,mailpit,postgres-meta
+
+      - name: Run the integration tests
+        run: |
+          eval "$(supabase status -o env | grep -E '^ANON_KEY=')"
+          SUPABASE_TEST_URL=http://127.0.0.1:54321 SUPABASE_TEST_ANON_KEY="$ANON_KEY" \
+            ./gradlew :core:data:testDebugUnitTest

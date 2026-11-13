@@ -432,3 +432,7 @@ verify_jwt = false
 # Account deletion is called by the signed-in user.
 [functions.delete-account]
 verify_jwt = true
+
+# The blocklist is public, signed data; the app calls it with the anon key.
+[functions.blocklist]
+verify_jwt = true

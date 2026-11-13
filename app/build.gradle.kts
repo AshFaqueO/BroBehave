@@ -4,6 +4,7 @@ plugins {
     id("brobehave.hilt")
     id("brobehave.android.robolectric")
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.baselineprofile)
 }
 
 // Firebase needs app/google-services.json (git-ignored). Without it the app still builds
@@ -15,15 +16,33 @@ if (file("google-services.json").exists()) {
     logger.lifecycle("BroBehave: app/google-services.json not found — FCM and Crashlytics are inactive.")
 }
 
+val webBaseUrl = providers.gradleProperty("brobehave.webBaseUrl").get()
+val webUri = uri(webBaseUrl)
+
 android {
     namespace = "com.brobehave.app"
+
+    // Release signing comes from environment variables (CI secrets) and is never committed.
+    // Without them, release builds are simply unsigned.
+    val keystoreFile = providers.environmentVariable("BROBEHAVE_KEYSTORE_FILE").orNull
+    signingConfigs {
+        if (keystoreFile != null) {
+            create("release") {
+                storeFile = file(keystoreFile)
+                storePassword = providers.environmentVariable("BROBEHAVE_KEYSTORE_PASSWORD").orNull
+                keyAlias = providers.environmentVariable("BROBEHAVE_KEY_ALIAS").orNull
+                keyPassword = providers.environmentVariable("BROBEHAVE_KEY_PASSWORD").orNull
+            }
+        }
+    }
 
     defaultConfig {
         applicationId = "com.brobehave.app"
         versionCode = 1
-        versionName = "0.2.0"
-        // PLACEHOLDER: host of the invite App Links (https://<host>/u/<username>).
-        manifestPlaceholders["inviteHost"] = "brobehave.app"
+        versionName = "0.5.0"
+        // Invite links: https://<host><path>/invite/?u=<username>
+        manifestPlaceholders["inviteHost"] = webUri.host
+        manifestPlaceholders["invitePath"] = webUri.path.trimEnd('/') + "/invite"
     }
 
     buildFeatures.buildConfig = true
@@ -38,6 +57,8 @@ android {
         create("github") {
             dimension = "distribution"
             buildConfigField("boolean", "AUTO_DETECTION", "true")
+            val repo = providers.gradleProperty("brobehave.githubRepo").get()
+            buildConfigField("String", "GITHUB_REPO", "\"$repo\"")
         }
     }
 
@@ -46,7 +67,15 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Release signing (from environment variables / GitHub Secrets) is added in Phase 5.
+            signingConfig = signingConfigs.findByName("release")
+        }
+        // The release code (R8-shrunk) pointed at the local Supabase stack, for testing what
+        // actually ships. Debug-signed and allowed plain http; never distributed.
+        create("staging") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
+            versionNameSuffix = "-staging"
         }
     }
 }
@@ -77,6 +106,14 @@ dependencies {
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
+
+    // Distribution channel specifics.
+    "playImplementation"(libs.play.app.update)
+    "playImplementation"(libs.play.review)
+
+    // Lets the baseline profile shipped in the APK be installed on first run.
+    implementation(libs.androidx.profileinstaller)
+    "baselineProfile"(project(":baselineprofile"))
 
     // Firebase: FCM + Crashlytics only. No analytics, no other trackers.
     implementation(platform(libs.firebase.bom))

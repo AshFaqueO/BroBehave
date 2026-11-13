@@ -47,5 +47,8 @@ fun Project.configureUnitTestDependencies() {
         useJUnitPlatform()
         // Placeholder modules have no tests yet; Gradle 9 fails such tasks by default.
         failOnNoDiscoveredTests.set(false)
+        // The integration tests switch on with this variable; declare it as an input so a
+        // cached "skipped" result is never reused once it is set.
+        inputs.property("supabaseTestUrl", providers.environmentVariable("SUPABASE_TEST_URL").orElse(""))
     }
 }

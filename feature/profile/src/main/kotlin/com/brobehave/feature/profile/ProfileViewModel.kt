@@ -9,6 +9,8 @@ import com.brobehave.core.data.SocialRepository
 import com.brobehave.core.data.StreakRepository
 import com.brobehave.core.data.dataError
 import com.brobehave.core.designsystem.component.DayStatus
+import com.brobehave.core.model.DetectionGateway
+import com.brobehave.core.model.DetectionState
 import com.brobehave.core.model.FeedPost
 import com.brobehave.core.model.Profile
 import com.brobehave.core.model.Rank
@@ -50,6 +52,9 @@ data class ProfileUiState(
     /** Reactors of the post whose sheet is open: null = closed, empty while loading is [reactorsLoading]. */
     val reactors: List<Reactor>? = null,
     val reactorsOpen: Boolean = false,
+    /** False when automatic detection is switched off for this build. */
+    val detectionAvailable: Boolean = false,
+    val detection: DetectionState = DetectionState(),
 ) {
     fun dayStatus(date: LocalDate): DayStatus {
         val key = date.toString()
@@ -79,6 +84,7 @@ class ProfileViewModel @Inject constructor(
     private val streakRepository: StreakRepository,
     private val socialRepository: SocialRepository,
     private val preferences: AppPreferences,
+    private val detectionGateway: DetectionGateway,
     private val clock: Clock,
 ) : ViewModel() {
     private val transient = MutableStateFlow(Transient())
@@ -91,7 +97,11 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    val state: StateFlow<ProfileUiState> = combine(
+    val state: StateFlow<ProfileUiState> = combine(baseState(), detectionGateway.state) { base, detection ->
+        base.copy(detectionAvailable = detectionGateway.available, detection = detection)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), ProfileUiState())
+
+    private fun baseState() = combine(
         profileRepository.profile,
         streakRepository.observeHistory(),
         ticker,
@@ -118,7 +128,7 @@ class ProfileViewModel @Inject constructor(
             reactors = extra.reactors,
             reactorsOpen = extra.reactorsOpen,
         ).also { syncCelebrationBaseline(celebrated, streakRank) }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), ProfileUiState())
+    }
 
     init {
         refresh()
@@ -174,6 +184,9 @@ class ProfileViewModel @Inject constructor(
             transient.update { it.copy(error = result.exceptionOrNull()?.dataError()) }
         }
     }
+
+    /** Turning detection ON goes through the disclosure screen; only OFF happens here. */
+    fun turnOffDetection() = detectionGateway.stop()
 
     fun dismissCelebration() {
         val rank = state.value.celebration ?: return

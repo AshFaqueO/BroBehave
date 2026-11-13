@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>You're invited — BroBehave</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="site"><a href="../">BroBehave</a></header>
+  <main>
+    <h1 id="title">A bro invited you to BroBehave</h1>
+    <p id="lead">Quit together: track your streak, see each other's ranks, keep each other honest.</p>
+
+    <div class="card">
+      <p><a class="button" id="open" href="brobehave://invite">Open in BroBehave</a></p>
+      <p class="muted">Don't have the app yet? Install BroBehave, create your account, then tap this link again or search for the username below in <strong>Profile → My bros</strong>.</p>
+      <p id="who" class="muted" hidden></p>
+    </div>
+
+    <nav class="links">
+      <a href="../">About BroBehave</a>
+      <a href="../privacy.html">Privacy policy</a>
+    </nav>
+  </main>
+  <script>
+    // The username comes from ?u=<username>. Only the app's own format is accepted, and it
+    // is written with textContent, so nothing from the link can run as code.
+    (function () {
+      var name = (new URLSearchParams(location.search).get("u") || "").toLowerCase();
+      if (!/^[a-z0-9_]{3,20}$/.test(name)) return;
+      document.getElementById("title").textContent = "@" + name + " invited you to BroBehave";
+      document.getElementById("open").href = "brobehave://invite?u=" + encodeURIComponent(name);
+      var who = document.getElementById("who");
+      who.textContent = "Username to search for: @" + name;
+      who.hidden = false;
+    })();
+  </script>
+</body>
+</html>

@@ -36,7 +36,12 @@
     <string name="tracking_self">Self-report</string>
     <string name="tracking_self_subtitle">Adds an “I slipped” button. A slip lowers your rank for 7 days.</string>
     <string name="tracking_auto">Automatic detection</string>
-    <string name="tracking_auto_subtitle">Coming in a later update. Gives you the Verified ✓ badge.</string>
+    <string name="tracking_auto_subtitle">Checks website names on this phone and flags the day for you. Earns the Verified ✓ badge.</string>
+    <string name="tracking_auto_active">On. Website names are checked on this phone; nothing is blocked.</string>
+    <string name="tracking_auto_revoked">Stopped: another VPN took over. Turn it on again to keep your Verified ✓ badge.</string>
+    <string name="tracking_private_dns">Private DNS is set to a provider in your phone settings, so detection cannot see lookups. Set Private DNS to “Automatic” or “Off” in Settings → Network.</string>
+    <string name="tracking_battery">Your phone may stop detection to save battery. Allow BroBehave to run unrestricted to keep it on.</string>
+    <string name="tracking_battery_open">Open battery settings</string>
     <string name="tracking_none">Both off: your rank comes from your streak alone.</string>
 
     <!-- Confirm dialogs -->
@@ -71,8 +76,6 @@
     <string name="friends_empty_message">Quitting is easier together. Invite someone you trust.</string>
     <string name="friends_invite">Invite a bro</string>
     <string name="friends_invite_text">Join me on BroBehave. Add me: %1$s</string>
-    <!-- PLACEHOLDER domain: replace once the real App Links domain is decided. -->
-    <string name="friends_invite_link" translatable="false">https://brobehave.app/u/%1$s</string>
 
     <!-- Someone else's profile -->
     <string name="user_streak">Streak</string>
@@ -123,10 +126,6 @@
     <string name="settings_privacy_policy">Privacy policy</string>
     <string name="settings_terms">Terms of use</string>
     <string name="settings_delete_web">Delete your account on the web</string>
-    <!-- PLACEHOLDER URLs: replace once the real pages exist. -->
-    <string name="url_privacy_policy" translatable="false">https://brobehave.app/privacy</string>
-    <string name="url_terms" translatable="false">https://brobehave.app/terms</string>
-    <string name="url_delete_account" translatable="false">https://brobehave.app/delete-account</string>
 
     <!-- Edit profile -->
     <string name="edit_title">Edit profile</string>

@@ -1,5 +1,13 @@
 package com.brobehave.feature.profile
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.os.PowerManager
+import android.provider.Settings
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,12 +28,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -48,8 +60,11 @@ import com.brobehave.core.designsystem.component.SettingsRow
 import com.brobehave.core.designsystem.component.StreakRing
 import com.brobehave.core.designsystem.component.TierBadge
 import com.brobehave.core.designsystem.component.ToggleRow
+import com.brobehave.core.designsystem.component.rememberReducedMotion
 import com.brobehave.core.designsystem.theme.BroTheme
 import com.brobehave.core.designsystem.theme.style
+import com.brobehave.core.model.DetectionState
+import com.brobehave.core.model.DetectionStatus
 import com.brobehave.core.model.Profile
 import com.brobehave.core.model.Rank
 import com.brobehave.core.model.StreakSnapshot
@@ -64,6 +79,7 @@ fun ProfileScreen(
     onOpenFriends: () -> Unit,
     onOpenSettings: () -> Unit,
     onEditProfile: () -> Unit,
+    onEnableDetection: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel(),
 ) {
@@ -121,15 +137,14 @@ fun ProfileScreen(
                     checked = profile.selfReportEnabled,
                     onCheckedChange = viewModel::setSelfReport,
                 )
-                // Automatic detection is built in Phase 4 (:detection); shown disabled until then.
-                ToggleRow(
-                    title = stringResource(R.string.tracking_auto),
-                    subtitle = stringResource(R.string.tracking_auto_subtitle),
-                    checked = false,
-                    onCheckedChange = {},
-                    enabled = false,
-                )
-                if (!profile.selfReportEnabled) {
+                if (state.detectionAvailable) {
+                    DetectionToggle(
+                        state = state.detection,
+                        onTurnOn = onEnableDetection,
+                        onTurnOff = viewModel::turnOffDetection,
+                    )
+                }
+                if (!profile.selfReportEnabled && state.detection.status != DetectionStatus.ACTIVE) {
                     Text(
                         text = stringResource(R.string.tracking_none),
                         style = MaterialTheme.typography.bodyMedium,
@@ -289,6 +304,56 @@ private fun StreakCard(profile: Profile, snapshot: StreakSnapshot, onOpenBadges:
     }
 }
 
+/**
+ * The automatic-detection switch with its status. Turning it on opens the disclosure
+ * screen first; nothing starts from this switch alone.
+ */
+@Composable
+private fun DetectionToggle(state: DetectionState, onTurnOn: () -> Unit, onTurnOff: () -> Unit) {
+    val context = LocalContext.current
+    val active = state.status == DetectionStatus.ACTIVE
+    ToggleRow(
+        title = stringResource(R.string.tracking_auto),
+        subtitle = stringResource(
+            when (state.status) {
+                DetectionStatus.ACTIVE -> R.string.tracking_auto_active
+                DetectionStatus.REVOKED -> R.string.tracking_auto_revoked
+                DetectionStatus.OFF -> R.string.tracking_auto_subtitle
+            },
+        ),
+        checked = active,
+        onCheckedChange = { if (it) onTurnOn() else onTurnOff() },
+    )
+    if (active && state.privateDnsBypass) {
+        StatusNote(stringResource(R.string.tracking_private_dns), isWarning = true)
+    }
+    if (active && !context.isIgnoringBatteryOptimizations()) {
+        StatusNote(stringResource(R.string.tracking_battery), isWarning = false)
+        TextButton(onClick = { context.openBatterySettings() }) { Text(stringResource(R.string.tracking_battery_open)) }
+    }
+}
+
+@Composable
+private fun StatusNote(text: String, isWarning: Boolean) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = if (isWarning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+private fun Context.isIgnoringBatteryOptimizations(): Boolean =
+    getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)
+
+/** Opens the system list where the user can exempt the app; no special permission needed. */
+private fun Context.openBatterySettings() {
+    try {
+        startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+    } catch (_: ActivityNotFoundException) {
+        // Some devices have no such screen; the note above still explains what to do.
+    }
+}
+
 /** Kind confirmation with an optional private note that never leaves the device. */
 @Composable
 private fun NoteDialog(
@@ -319,9 +384,18 @@ private fun NoteDialog(
 }
 
 private const val NOTE_MAX = 500
+private const val CELEBRATION_START_SCALE = 0.3f
 
 @Composable
 private fun CelebrationDialog(rank: Rank, onDismiss: () -> Unit) {
+    // The new badge pops in with a bounce; with reduced motion it simply appears.
+    val reducedMotion = rememberReducedMotion()
+    val scale = remember { Animatable(if (reducedMotion) 1f else CELEBRATION_START_SCALE) }
+    LaunchedEffect(rank) {
+        if (!reducedMotion) {
+            scale.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
+        }
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.celebration_title)) },
@@ -331,7 +405,13 @@ private fun CelebrationDialog(rank: Rank, onDismiss: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(BroTheme.spacing.md),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                TierBadge(rank = rank)
+                TierBadge(
+                    rank = rank,
+                    modifier = Modifier.graphicsLayer {
+                        scaleX = scale.value
+                        scaleY = scale.value
+                    },
+                )
                 Text(
                     text = stringResource(R.string.celebration_message, stringResource(rank.style.nameRes)),
                     textAlign = TextAlign.Center,

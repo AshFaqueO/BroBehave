@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Name of the VPN as shown in Android's system settings -->
+    <string name="detection_session">BroBehave automatic detection</string>
+
+    <!-- Persistent notification -->
+    <string name="detection_channel_name">Automatic detection</string>
+    <string name="detection_channel_description">Shown while automatic detection is running.</string>
+    <string name="detection_notification_title">Automatic detection is on</string>
+    <string name="detection_notification_text">Website names are checked on this phone. Nothing is blocked.</string>
+    <string name="detection_notification_off">Turn off</string>
+
+    <!-- Prominent disclosure, shown before Android's own VPN dialog -->
+    <string name="disclosure_title">Before you turn on automatic detection</string>
+    <string name="disclosure_intro">BroBehave will use Android\'s VPN feature on this phone to notice visits to adult websites. Here is exactly what that means.</string>
+    <string name="disclosure_checked_title">What is checked</string>
+    <string name="disclosure_checked_body">Only the names of websites your phone looks up (for example “example.com”), compared on this phone against a list of adult sites. Not pages, not messages, not what you type. Nothing is blocked or changed, and your traffic is not sent through any BroBehave server.</string>
+    <string name="disclosure_shared_title">What is shared</string>
+    <string name="disclosure_shared_body">Only that a day was flagged. A flagged day lowers your rank for 7 days, and friends see your rank if you allow it. You get the Verified ✓ badge while detection stays on.</string>
+    <string name="disclosure_never_title">What is never shared or stored</string>
+    <string name="disclosure_never_body">Which sites, how many times, or at what time. Site names are thrown away the moment they are checked, even on this phone.</string>
+    <string name="disclosure_limits_title">Good to know</string>
+    <string name="disclosure_limits_body">A flagged day cannot be removed. Android shows a key icon while this is on, and a notification with a Turn off button. Only one VPN can run at a time, so this stops if you start another VPN app.</string>
+    <string name="disclosure_consent">I understand and want BroBehave to check website names on this phone</string>
+    <string name="disclosure_turn_on">Turn on</string>
+    <string name="disclosure_not_now">Not now</string>
+    <string name="disclosure_denied">Android did not allow the VPN, so detection stays off. You can try again any time.</string>
+</resources>

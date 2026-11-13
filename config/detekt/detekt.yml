@@ -17,12 +17,17 @@ style:
     ignoreAnnotated: ['Preview']
   WildcardImport:
     active: true
+  ReturnCount:
+    # Parsers of untrusted bytes validate step by step and bail out early.
+    max: 4
+    excludeGuardClauses: true
 
 complexity:
   LongParameterList:
     # Composables take many parameters by design; constructors are filled in by Hilt.
     ignoreAnnotated: ['Composable']
     constructorThreshold: 10
+    functionThreshold: 7
   LongMethod:
     ignoreAnnotated: ['Composable']
   CyclomaticComplexMethod:
@@ -33,4 +38,5 @@ complexity:
     # Repositories expose one function per backend operation and view models one per UI event.
     thresholdInClasses: 20
     thresholdInInterfaces: 20
+    thresholdInObjects: 20
     ignoreAnnotatedFunctions: ['Composable', 'Preview']
